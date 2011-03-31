@@ -1,0 +1,9 @@
+{application,
+ fastlog,
+ [{description,[]},
+  {vsn,"1"},
+  {modules,[fastlog_app,fastlog_server,fastlog_sup]},
+  {registered,[fastlog_server]},
+  {applications,[kernel,stdlib,sasl,riak_err]},
+  {mod,{fastlog_app,[]}},
+  {env,[{levels,[{debug,on},{warn,on},{info,on},{error,on}]}]}]}.
