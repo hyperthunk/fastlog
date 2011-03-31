@@ -2,7 +2,7 @@
  fastlog,
  [{description,[]},
   {vsn,"0.0.1"},
-  {modules,[fastlog_app,fastlog_server,fastlog_sup]},
+  {modules,[fastlog,fastlog_app,fastlog_server,fastlog_sup]},
   {registered,[fastlog_server]},
   {applications,[kernel,stdlib,sasl,riak_err]},
   {mod,{fastlog_app,[]}},
