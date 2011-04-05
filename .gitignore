@@ -2,3 +2,6 @@ ebin/fastlog.beam
 ebin/fastlog_app.beam
 ebin/fastlog_server.beam
 ebin/fastlog_sup.beam
+ebin/fastlog.beam
+ebin/fastlog_sup.beam
+ebin/fastlog_server.beam

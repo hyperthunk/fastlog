@@ -27,16 +27,63 @@
 %% -----------------------------------------------------------------------------
 
 -module(fastlog).
--export([start_link/0, stop/0]).
+-export([start/0
+        ,stop/0
+        ,set_level/1
+        ,debug/1
+        ,debug/2
+        ,info/1
+        ,info/2
+        ,warn/1
+        ,warn/2
+        ,error/1
+        ,error/2]).
+
+-spec(debug/1 :: (string()) -> 'ok').
+-spec(debug/2 :: (string(), [any()]) -> 'ok').
+-spec(info/1  :: (string()) -> 'ok').
+-spec(info/2  :: (string(), [any()]) -> 'ok').
+-spec(warn/1  :: (string()) -> 'ok').
+-spec(warn/2  :: (string(), [any()]) -> 'ok').
+-spec(error/1 :: (string()) -> 'ok').
+-spec(error/2 :: (string(), [any()]) -> 'ok').
 
 %% ===================================================================
 %% Public API Functions
 %% ===================================================================
 
 %% @doc Starts the fastlog application
-start_link() ->
+start() ->
     appstart:start(fastlog).
 
 %% @doc Stops the fastlog application
 stop() ->
     application:stop(fastlog).
+
+%% @doc Sets the current log level
+set_level(Lvl) ->
+    gen_server:call(fastlog_server, {set_level, Lvl}).
+
+debug(Format) ->
+    gen_server:cast(fastlog_server, {debug, Format}).
+
+debug(Format, Args) when is_list(Args) ->
+    gen_server:cast(fastlog_server, {debug, Format, Args}).
+
+info(Format) ->
+    gen_server:cast(fastlog_server, {info, Format}).
+
+info(Format, Args) when is_list(Args) ->
+    gen_server:cast(fastlog_server, {info, Format, Args}).
+
+warn(Format) ->
+    gen_server:cast(fastlog_server, {warn, Format}).
+
+warn(Format, Args) when is_list(Args) ->
+    gen_server:cast(fastlog_server, {warn, Format, Args}).
+
+error(Format) ->
+    gen_server:cast(fastlog_server, {error, Format}).
+
+error(Format, Args) when is_list(Args) ->
+    gen_server:cast(fastlog_server, {error, Format, Args}).

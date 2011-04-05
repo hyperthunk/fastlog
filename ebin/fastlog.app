@@ -1,9 +1,13 @@
 {application,
  fastlog,
  [{description,[]},
-  {vsn,"0.0.1"},
-  {modules,[fastlog,fastlog_app,fastlog_server,fastlog_sup]},
+  {vsn,"0.0.2"},
+  {modules,[fastlog,fastlog_server,fastlog_sup]},
   {registered,[fastlog_server]},
   {applications,[kernel,stdlib,sasl,riak_err]},
-  {mod,{fastlog_app,[]}},
-  {env,[{levels,[{debug,on},{warn,on},{info,on},{error,on}]}]}]}.
+  {mod,{appstart_loader,[]}},
+  {env,[
+    {appstart,[
+        {startup, [fastlog_sup, start_link]}
+    ]}
+  ]}]}.

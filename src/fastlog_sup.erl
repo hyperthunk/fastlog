@@ -48,12 +48,12 @@ start_link() ->
 %% Supervisor callbacks
 %% ===================================================================
 
-init(Config) ->
+init(_) ->
     %% FIXME: setting debug=on should set all the others too..
-    LogLevels = proplists:get_value(levels, Config, []),
+    Conf = application:get_all_env(),
     {ok, {{one_for_one, 5, 10}, [
         {fastlog_server,
-            {fastlog_server, start_link, [LogLevels]},
+            {fastlog_server, start_link, [Conf]},
             permanent, 5000, worker, [gen_server]}
     ]}}.
 

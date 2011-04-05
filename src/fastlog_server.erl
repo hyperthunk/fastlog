@@ -31,15 +31,6 @@
 -module(fastlog_server).
 -behaviour(gen_server2).
 
--spec(debug/1 :: (string()) -> 'ok').
--spec(debug/2 :: (string(), [any()]) -> 'ok').
--spec(info/1  :: (string()) -> 'ok').
--spec(info/2  :: (string(), [any()]) -> 'ok').
--spec(warn/1  :: (string()) -> 'ok').
--spec(warn/2  :: (string(), [any()]) -> 'ok').
--spec(error/1 :: (string()) -> 'ok').
--spec(error/2 :: (string(), [any()]) -> 'ok').
-
 -export([init/1
         ,handle_call/3
         ,handle_cast/2
@@ -50,15 +41,7 @@
 -export([start/0
         ,start/1
         ,start_link/0
-        ,start_link/1
-        ,debug/1
-        ,debug/2
-        ,info/1
-        ,info/2
-        ,warn/1
-        ,warn/2
-        ,error/1
-        ,error/2]).
+        ,start_link/1]).
 
 -type(mode() :: on | off).
 
@@ -86,49 +69,18 @@ start_link() ->
 
 -spec(start_link/1 :: ([{atom(), term()}]) -> {'ok', pid()} | 'ignore' | {'error', any()}).
 %% @doc starts erlxsl_fast_log with the supplied options, for supervision tree membership.
-%% Options = {verbose, on | off} %% turn on verbose logging (i.e., log all messages)
-%%                        {debug, on | off} %% turn on debug logging
-%%                        {info, on | off} %% turn on infomational logging
-%%                        {warn, on | off} %% turn on warning logging
-%%                        {error, on | off} %% turn on error logging
+%% Options = {level, debug | info | warn | error}
 start_link(Options) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, Options, []).
-
-debug(Format) ->
-    gen_server:cast(?MODULE, {debug, Format}).
-
-debug(Format, Args) when is_list(Args) ->
-    gen_server:cast(?MODULE, {debug, Format, Args}).
-
-info(Format) ->
-    gen_server:cast(?MODULE, {info, Format}).
-
-info(Format, Args) when is_list(Args) ->
-    gen_server:cast(?MODULE, {info, Format, Args}).
-
-warn(Format) ->
-    gen_server:cast(?MODULE, {warn, Format}).
-
-warn(Format, Args) when is_list(Args) ->
-    gen_server:cast(?MODULE, {warn, Format, Args}).
-
-error(Format) ->
-    gen_server:cast(?MODULE, {error, Format}).
-
-error(Format, Args) when is_list(Args) ->
-    gen_server:cast(?MODULE, {error, Format, Args}).
 
 %%--------------------------------------------------------------------
 
 init(Options) ->
-    Verbose = proplists:get_value(verbose, Options, on),
-    {ok, #state{
-        debug = proplists:get_value(debug, Options, Verbose),
-        info    = proplists:get_value(info, Options, Verbose),
-        warn    = proplists:get_value(warn, Options, Verbose),
-        error = proplists:get_value(error, Options, Verbose)
-    }}.
+    Lvl = proplists:get_value(level, Options, error),
+    {ok, set_level(Lvl, #state{})}.
 
+handle_call({set_level, Lvl}, _From, State) ->
+    {reply, {ok, Lvl}, set_level(Lvl, State)};
 handle_call(_Request, _From, State) ->
     {noreply, State}.
 
@@ -185,3 +137,22 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+set_level(Lvl, State) ->
+    {D2, I2, W2, E2} = set_level(Lvl),
+    State#state{debug=D2, info=I2, warn=W2, error=E2}.
+
+set_level(Lvl) ->
+    case Lvl of
+        debug ->
+            {on, on, on, on};
+        info ->
+            {off, on, on, on};
+        warn ->
+            {off, off, on, on};
+        error ->
+            {off, off, off, on};
+        none ->
+            {off, off, off, off}
+    end.
+
