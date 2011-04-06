@@ -32,7 +32,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/0, start_link/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -42,18 +42,21 @@
 %% ===================================================================
 
 start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+    start_link([]).
+
+start_link(Options) ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [Options]).
 
 %% ===================================================================
 %% Supervisor callbacks
 %% ===================================================================
 
-init(_) ->
-    %% FIXME: setting debug=on should set all the others too..
-    Conf = application:get_all_env(),
+init([]) ->
+    init(application:get_all_env(fastlog));
+init(Args) ->
     {ok, {{one_for_one, 5, 10}, [
         {fastlog_server,
-            {fastlog_server, start_link, [Conf]},
+            {fastlog_server, start_link, [Args]},
             permanent, 5000, worker, [gen_server]}
     ]}}.
 

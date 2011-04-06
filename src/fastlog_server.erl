@@ -75,10 +75,13 @@ start_link(Options) ->
 
 %%--------------------------------------------------------------------
 
-init(Options) ->
+init([Options]) ->
     Lvl = proplists:get_value(level, Options, error),
-    {ok, set_level(Lvl, #state{})}.
+    State = set_level(Lvl, #state{}),
+    {ok, State}.
 
+handle_call(get_level, _From, State) ->
+    {reply, get_level(State), State};
 handle_call({set_level, Lvl}, _From, State) ->
     {reply, {ok, Lvl}, set_level(Lvl, State)};
 handle_call(_Request, _From, State) ->
@@ -156,3 +159,8 @@ set_level(Lvl) ->
             {off, off, off, off}
     end.
 
+get_level(#state{ debug=on }) -> debug;
+get_level(#state{ debug=off, info=on }) -> info;
+get_level(#state{ info=off, warn=on }) -> warn;
+get_level(#state{ warn=off, error=on }) -> error;
+get_level(#state{ error=off }) -> off.

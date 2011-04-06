@@ -30,6 +30,7 @@
 -export([start/0
         ,stop/0
         ,set_level/1
+        ,get_level/0
         ,debug/1
         ,debug/2
         ,info/1
@@ -39,14 +40,18 @@
         ,error/1
         ,error/2]).
 
--spec(debug/1 :: (string()) -> 'ok').
--spec(debug/2 :: (string(), [any()]) -> 'ok').
--spec(info/1  :: (string()) -> 'ok').
--spec(info/2  :: (string(), [any()]) -> 'ok').
--spec(warn/1  :: (string()) -> 'ok').
--spec(warn/2  :: (string(), [any()]) -> 'ok').
--spec(error/1 :: (string()) -> 'ok').
--spec(error/2 :: (string(), [any()]) -> 'ok').
+-type(level() :: debug | info | warn | error | off).
+
+-spec(set_level/1   :: (level()) -> {ok, level()}).
+-spec(get_level/0   :: () -> level()).
+-spec(debug/1       :: (string()) -> 'ok').
+-spec(debug/2       :: (string(), [any()]) -> 'ok').
+-spec(info/1        :: (string()) -> 'ok').
+-spec(info/2        :: (string(), [any()]) -> 'ok').
+-spec(warn/1        :: (string()) -> 'ok').
+-spec(warn/2        :: (string(), [any()]) -> 'ok').
+-spec(error/1       :: (string()) -> 'ok').
+-spec(error/2       :: (string(), [any()]) -> 'ok').
 
 %% ===================================================================
 %% Public API Functions
@@ -59,6 +64,10 @@ start() ->
 %% @doc Stops the fastlog application
 stop() ->
     application:stop(fastlog).
+
+%% @doc Gets the current log level
+get_level() ->
+    gen_server:call(fastlog_server, get_level).
 
 %% @doc Sets the current log level
 set_level(Lvl) ->
