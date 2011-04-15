@@ -33,7 +33,7 @@
 -define(LOG(Level, Format, Args),
     {_, {__Log_M, __Log_F, __Log_A}} = 
         process_info(self(), current_function),
-    apply(fastlog, error, [
+    apply(fastlog, Level, [
         list_to_atom(lists:foldl(
             fun(E, Acc) ->
                 case Acc of

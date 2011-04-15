@@ -27,7 +27,7 @@
 %% -----------------------------------------------------------------------------
 
 -module(fastlog).
--export([start/0
+-export([start/0,match_appender/1,match_appender/2
         ,stop/0
         ,configure/1
         ,add_logger/1
@@ -120,45 +120,75 @@ debug(Format) ->
     debug(fastlog_server, Format).
 
 debug(Name, Format) when is_atom(Name) ->
-    gen_server:cast(server_name(Name), {debug, Format});
+    log(Name, {debug, Format});
 debug(Format, Args) when is_list(Args) ->
     debug(fastlog_server, Format, Args).
 
 debug(Name, Format, Args) when is_list(Args) ->
-    gen_server:cast(server_name(Name), {debug, Format, Args}).
+    log(Name, {debug, Format, Args}).
 
 info(Format) ->
     info(fastlog_server, Format).
 
 info(Name, Format) when is_atom(Name) ->
-    gen_server:cast(server_name(Name), {info, Format});
+    log(Name, {info, Format});
 info(Format, Args) when is_list(Args) ->
     info(fastlog_server, Format, Args).
 
 info(Name, Format, Args) when is_list(Args) ->
-    gen_server:cast(server_name(Name), {info, Format, Args}).
+    log(Name, {info, Format, Args}).
 
 warn(Format) ->
     warn(fastlog_server, Format).
-    
+
 warn(Name, Format) when is_atom(Name) ->
-    gen_server:cast(server_name(Name), {warn, Format});
+    log(Name, {warn, Format});
 warn(Format, Args) when is_list(Args) ->
     warn(fastlog_server, Format, Args).
-    
+
 warn(Name, Format, Args) when is_list(Args) ->
-    gen_server:cast(server_name(Name), {warn, Format, Args}).
+    log(Name, {warn, Format, Args}).
 
 error(Format) ->
     fastlog:error(fastlog_server, Format).
-    
+
 error(Name, Format) when is_atom(Name) ->
-    gen_server:cast(server_name(Name), {error, Format});
+    log(Name, {error, Format});
 error(Format, Args) when is_list(Args) ->
     fastlog:error(fastlog_server, Format, Args).
-    
+
 error(Name, Format, Args) when is_list(Args) ->
-    gen_server:cast(server_name(Name), {error, Format, Args}).
+    log(Name, {error, Format, Args}).
+
+log(Name, Data) ->
+    %% TODO: reconsider where this belongs
+    Loggers = supervisor:which_children(fastlog_sup),
+    case lists:filter(match_appender(Name), Loggers) of
+        [] ->
+            %% we don't fall over if the logger isn't there...
+            ok;
+        Items ->
+            [gen_server:cast(S, Data) || {S,_,_,_} <- Items]
+    end.
+
+match_appender(Name) ->
+    fun({Pattern,_,_,_}) ->
+        match_appender(atom_to_binary(Name, utf8), 
+                        atom_to_binary(Pattern, utf8))
+    end.
+
+match_appender(Name, Appender) ->
+    [_,Pattern] = binary:split(Appender, <<".">>),
+    Len = byte_size(Pattern),
+    case binary:longest_common_prefix([Pattern, Name]) of
+        0 -> 
+            false;
+        N when N == Len -> 
+            true;
+        Index ->
+            Chunks = binary:part(Pattern, Index, Len - Index),
+            hd(binary:split(Chunks, <<".">>, [global])) == <<"*">>
+    end.
 
 server_name(Name) when is_atom(Name) ->
     server_name(atom_to_list(Name));
