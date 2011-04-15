@@ -50,7 +50,6 @@ start_link() ->
     start_link(Options).
 
 start_link(Options) ->
-    io:format("start_link fastlog_sup with [~p]~n", [Options]),
     supervisor:start_link({local, ?MODULE}, ?MODULE, Options).
 
 add_logger(Name) ->
@@ -80,7 +79,6 @@ remove_logger(Name) ->
 init([]) ->
     init(application:get_all_env(fastlog));
 init(Args) ->
-    io:format("Init fastlog sup with ~p~n", [Args]),
     {ok, {{one_for_one, 5, 10}, [
         {fastlog:server_name(fastlog_server),
             {fastlog_server, start_link, [Args]},

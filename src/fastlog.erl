@@ -29,6 +29,7 @@
 -module(fastlog).
 -export([start/0
         ,stop/0
+        ,configure/1
         ,add_logger/1
         ,add_logger/2
         ,remove_logger/1
@@ -78,6 +79,14 @@ stop() ->
 %% @doc Adds a named logger.
 add_logger(Name) ->
     fastlog_sup:add_logger(Name).
+
+configure(AppName) ->
+    case kvc:path(fastlog, application:get_all_env(AppName)) of
+        [] ->
+            ignored;
+        Config ->
+            [add_logger(Name, Conf) || {Name, Conf} <- Config]
+    end.
 
 %%
 %% @doc Adds a named logger. If `Config' is an atom, then it

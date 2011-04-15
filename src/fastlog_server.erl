@@ -48,6 +48,7 @@
 -type(mode() :: on | off).
 
 -record(state, {
+    name        :: atom(),
     debug = off :: mode(),
     info  = off :: mode(),
     warn  = off :: mode(),
@@ -73,20 +74,20 @@ start_link() ->
 %% @doc starts erlxsl_fast_log with the supplied options, for supervision tree membership.
 %% Options = {level, debug | info | warn | error}
 start_link(Options) ->
-    Name = case kvc:value(name, Options, ?DEFAULT) of
-        [] -> ?DEFAULT;
-        Value -> Value
+    DefaultName = ?DEFAULT,
+    {Name, StartArgs} = case kvc:value(name, Options, DefaultName) of
+        [] -> {DefaultName, [{name, DefaultName}|Options]};
+        Value -> {Value, Options}
     end,
-    io:format("start_link fastlog_server ~p with ~p~n", [Name, Options]),
     gen_server:start_link({local, Name}, 
-                            ?MODULE, [Options], []).
+                            ?MODULE, [StartArgs], []).
 
 %%--------------------------------------------------------------------
 
 init([Options]) ->
-    io:format("init fastlog_server with ~p~n", [Options]),
     Lvl = proplists:get_value(level, Options, error),
-    State = set_level(Lvl, #state{}),
+    Name = proplists:get_value(name, Options, ?DEFAULT),
+    State = set_level(Lvl, #state{name=Name}),
     {ok, State}.
 
 handle_call(get_level, _From, State) ->
@@ -98,43 +99,43 @@ handle_call(_Request, _From, State) ->
 
 handle_cast({debug, _}, #state{debug=off}=State) ->
     {noreply, State};
-handle_cast({debug, Format}, State) ->
-    error_logger:info_msg(Format, []),
+handle_cast({debug, Format}, State=#state{name=Name}) ->
+    error_logger:info_msg(format(Format), [Name]),
     {noreply, State};
 handle_cast({debug, _, _}, #state{debug=off}=State) ->
     {noreply, State};
-handle_cast({debug, Format, Args}, State) ->
-    error_logger:info_msg(Format, Args),
+handle_cast({debug, Format, Args}, State=#state{name=Name}) ->
+    error_logger:info_msg(format(Format), [Name|Args]),
     {noreply, State};
 handle_cast({info, _}, #state{info=off}=State) ->
     {noreply, State};
-handle_cast({info, Format}, State) ->
-    error_logger:info_msg(Format, []),
+handle_cast({info, Format}, State=#state{name=Name}) ->
+    error_logger:info_msg(format(Format), [Name]),
     {noreply, State};
 handle_cast({info, _, _}, #state{info=off}=State) ->
     {noreply, State};
-handle_cast({info, Format, Args}, State) ->
-    error_logger:info_msg(Format, Args),
+handle_cast({info, Format, Args}, State=#state{name=Name}) ->
+    error_logger:info_msg(format(Format), [Name|Args]),
     {noreply, State};
 handle_cast({warn, _}, #state{warn=off}=State) ->
     {noreply, State};
-handle_cast({warn, Format}, State) ->
-    error_logger:warning_msg(Format, []),
+handle_cast({warn, Format}, State=#state{name=Name}) ->
+    error_logger:warning_msg(format(Format), [Name]),
     {noreply, State};
 handle_cast({warn, _, _}, #state{warn=off}=State) ->
     {noreply, State};
-handle_cast({warn, Format, Args}, State) ->
-    error_logger:warning_msg(Format, Args),
+handle_cast({warn, Format, Args}, State=#state{name=Name}) ->
+    error_logger:warning_msg(format(Format), [Name|Args]),
     {noreply, State};
 handle_cast({error, _}, #state{error=off}=State) ->
     {noreply, State};
-handle_cast({error, Format}, State) ->
-    error_logger:error_msg(Format, []),
+handle_cast({error, Format}, State=#state{name=Name}) ->
+    error_logger:error_msg(format(Format), [Name]),
     {noreply, State};
 handle_cast({error, _, _}, #state{error=off}=State) ->
     {noreply, State};
-handle_cast({error, Format, Args}, State) ->
-    error_logger:error_msg(Format, Args),
+handle_cast({error, Format, Args}, State=#state{name=Name}) ->
+    error_logger:error_msg(format(Format), [Name|Args]),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -149,6 +150,9 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+format(Format) ->
+    "[~p] " ++ Format.
 
 set_level(Lvl, State) ->
     {D2, I2, W2, E2} = set_level(Lvl),
