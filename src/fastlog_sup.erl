@@ -32,30 +32,57 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0, start_link/1]).
+-export([start_link/0, start_link/1, 
+        add_logger/1, add_logger/2, remove_logger/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
 
-%% ===================================================================
+%% -----------------------------------------------------------------------------
 %% API functions
-%% ===================================================================
+%% -----------------------------------------------------------------------------
 
 start_link() ->
-    start_link([]).
+    Options = case application:get_all_env(fastlog) of
+        [] -> [{level, info}, {name, fastlog_server}];
+        Other -> Other
+    end,
+    start_link(Options).
 
 start_link(Options) ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [Options]).
+    io:format("start_link fastlog_sup with [~p]~n", [Options]),
+    supervisor:start_link({local, ?MODULE}, ?MODULE, Options).
 
-%% ===================================================================
+add_logger(Name) ->
+    add_logger(Name, [[{level, info}]]).
+    
+add_logger(Name, Config) when is_atom(Name) ->
+    add_logger(atom_to_list(Name), Config);
+add_logger(Name, Config) when is_list(Name) ->
+    Server = fastlog:server_name(Name),
+    case lists:keyfind(Server, 1, supervisor:which_children(?MODULE)) of
+        false ->
+            ChildSpec = {Server,
+                        {fastlog_server, start_link, [[{name, Server}|Config]]},
+                         permanent, brutal_kill, worker, [gen_server]},
+            supervisor:start_child(?MODULE, ChildSpec);
+        _ ->
+            supervisor:restart_child(?MODULE, Server)
+    end.
+
+remove_logger(Name) ->
+    supervisor:terminate_child(?MODULE, Name).
+
+%% -----------------------------------------------------------------------------
 %% Supervisor callbacks
-%% ===================================================================
+%% -----------------------------------------------------------------------------
 
 init([]) ->
     init(application:get_all_env(fastlog));
 init(Args) ->
+    io:format("Init fastlog sup with ~p~n", [Args]),
     {ok, {{one_for_one, 5, 10}, [
-        {fastlog_server,
+        {fastlog:server_name(fastlog_server),
             {fastlog_server, start_link, [Args]},
             permanent, 5000, worker, [gen_server]}
     ]}}.

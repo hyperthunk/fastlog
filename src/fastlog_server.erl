@@ -43,6 +43,8 @@
         ,start_link/0
         ,start_link/1]).
 
+-define(DEFAULT, fastlog:server_name(?MODULE)).
+
 -type(mode() :: on | off).
 
 -record(state, {
@@ -60,22 +62,29 @@ start() ->
 -spec(start/1 :: ([{atom(), term()}]) -> {'ok', pid()} | 'ignore' | {'error', any()}).
 %% @doc starts erlxsl_fast_log (standalone) with the supplied options.
 start(Options) ->
-    gen_server:start({local, ?MODULE}, ?MODULE, Options, []).
+    gen_server:start({local, ?MODULE}, ?MODULE, [Options], []).
 
 -spec(start_link/0 :: () -> {'ok', pid()} | 'ignore' | {'error', any()}).
 %% @doc starts erlxsl_fast_log with the default options.
 start_link() ->
-    start_link([]).
+    start_link([{name, ?MODULE}]).
 
 -spec(start_link/1 :: ([{atom(), term()}]) -> {'ok', pid()} | 'ignore' | {'error', any()}).
 %% @doc starts erlxsl_fast_log with the supplied options, for supervision tree membership.
 %% Options = {level, debug | info | warn | error}
 start_link(Options) ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, Options, []).
+    Name = case kvc:value(name, Options, ?DEFAULT) of
+        [] -> ?DEFAULT;
+        Value -> Value
+    end,
+    io:format("start_link fastlog_server ~p with ~p~n", [Name, Options]),
+    gen_server:start_link({local, Name}, 
+                            ?MODULE, [Options], []).
 
 %%--------------------------------------------------------------------
 
 init([Options]) ->
+    io:format("init fastlog_server with ~p~n", [Options]),
     Lvl = proplists:get_value(level, Options, error),
     State = set_level(Lvl, #state{}),
     {ok, State}.
@@ -97,7 +106,7 @@ handle_cast({debug, _, _}, #state{debug=off}=State) ->
 handle_cast({debug, Format, Args}, State) ->
     error_logger:info_msg(Format, Args),
     {noreply, State};
-handle_cast({info, _}, #state{debug=off}=State) ->
+handle_cast({info, _}, #state{info=off}=State) ->
     {noreply, State};
 handle_cast({info, Format}, State) ->
     error_logger:info_msg(Format, []),
