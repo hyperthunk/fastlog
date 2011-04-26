@@ -5,7 +5,7 @@
   {modules,[fastlog,fastlog_server,fastlog_sup]},
   {registered,[fastlog_server]},
   {applications,[kernel,stdlib,sasl]},
-  {mod,{appstart_loader,[]}},
+  {mod,{appstarter,[]}},
   {env,[
     {appstart,[
         {startup, [fastlog_sup, start_link]}
