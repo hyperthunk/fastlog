@@ -104,58 +104,58 @@ remove_logger(Name) ->
 
 %% @doc Gets the current log level
 get_level() ->
-    get_level(fastlog_server).
+    get_level(fastlog).
 
 get_level(Name) ->
     gen_server:call(server_name(Name), get_level).
 
 %% @doc Sets the current log level
 set_level(Lvl) ->
-    set_level(fastlog_server, Lvl).
+    set_level(fastlog, Lvl).
 
 set_level(Name, Lvl) ->
     gen_server:call(server_name(Name), {set_level, Lvl}).
 
 debug(Format) ->
-    debug(fastlog_server, Format).
+    debug(fastlog, Format).
 
 debug(Name, Format) when is_atom(Name) ->
     log(Name, {debug, Format});
 debug(Format, Args) when is_list(Args) ->
-    debug(fastlog_server, Format, Args).
+    debug(fastlog, Format, Args).
 
 debug(Name, Format, Args) when is_list(Args) ->
     log(Name, {debug, Format, Args}).
 
 info(Format) ->
-    info(fastlog_server, Format).
+    info(fastlog, Format).
 
 info(Name, Format) when is_atom(Name) ->
     log(Name, {info, Format});
 info(Format, Args) when is_list(Args) ->
-    info(fastlog_server, Format, Args).
+    info(fastlog, Format, Args).
 
 info(Name, Format, Args) when is_list(Args) ->
     log(Name, {info, Format, Args}).
 
 warn(Format) ->
-    warn(fastlog_server, Format).
+    warn(fastlog, Format).
 
 warn(Name, Format) when is_atom(Name) ->
     log(Name, {warn, Format});
 warn(Format, Args) when is_list(Args) ->
-    warn(fastlog_server, Format, Args).
+    warn(fastlog, Format, Args).
 
 warn(Name, Format, Args) when is_list(Args) ->
     log(Name, {warn, Format, Args}).
 
 error(Format) ->
-    fastlog:error(fastlog_server, Format).
+    fastlog:error(fastlog, Format).
 
 error(Name, Format) when is_atom(Name) ->
     log(Name, {error, Format});
 error(Format, Args) when is_list(Args) ->
-    fastlog:error(fastlog_server, Format, Args).
+    fastlog:error(fastlog, Format, Args).
 
 error(Name, Format, Args) when is_list(Args) ->
     log(Name, {error, Format, Args}).
@@ -193,4 +193,4 @@ match_appender(Name, Appender) ->
 server_name(Name) when is_atom(Name) ->
     server_name(atom_to_list(Name));
 server_name(Name) when is_list(Name) ->
-    list_to_atom("fastlog." ++ Name).
+    list_to_atom(Name).

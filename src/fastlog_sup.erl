@@ -45,7 +45,7 @@
 -spec(start_link/0 :: () -> {'ok', pid()} | 'ignore' | {'error', any()}).
 start_link() ->
     Options = case application:get_all_env(fastlog) of
-        [] -> [{level, info}, {name, fastlog_server}];
+        [] -> [{level, info}, {name, fastlog}];
         Other -> Other
     end,
     start_link(Options).
@@ -81,7 +81,7 @@ init([]) ->
     init(application:get_all_env(fastlog));
 init(Args) ->
     {ok, {{one_for_one, 5, 10}, [
-        {fastlog:server_name(fastlog_server),
+        {fastlog, %% this is the top level logger
             {fastlog_server, start_link, [Args]},
             permanent, 5000, worker, [gen_server]}
     ]}}.

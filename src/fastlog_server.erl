@@ -43,7 +43,7 @@
         ,start_link/0
         ,start_link/1]).
 
--define(DEFAULT, fastlog:server_name(?MODULE)).
+-define(DEFAULT, fastlog).
 
 -type(mode() :: on | off).
 
