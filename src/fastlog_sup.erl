@@ -42,6 +42,7 @@
 %% API functions
 %% -----------------------------------------------------------------------------
 
+-spec(start_link/0 :: () -> {'ok', pid()} | 'ignore' | {'error', any()}).
 start_link() ->
     Options = case application:get_all_env(fastlog) of
         [] -> [{level, info}, {name, fastlog_server}];

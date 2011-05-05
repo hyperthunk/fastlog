@@ -22,6 +22,11 @@
 %%
 %% -----------------------------------------------------------------------------
 
+%% NB: these macros do some *bonkers* stuff whenever they're expanded. 
+%% I would recommend that you DO NOT use them in production.
+
+%% TODO: provide a parse transform to do this instead.....
+
 -define(DEBUG(Format, Args), 
     ?LOG(debug, Format, Args)).
 -define(INFO(Format, Args), 
