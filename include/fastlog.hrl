@@ -22,6 +22,18 @@
 %%
 %% -----------------------------------------------------------------------------
 
+-record('fastlog.callsite', {
+    module      :: module(),
+    function    :: atom(),
+    arity       :: integer(),
+    line        :: integer()
+}).
+
+-record('fastlog.entry', {
+    message = ""         :: [char()],
+    site    = undefined  :: #'fastlog.callsite'{}
+}).
+
 %% NB: these macros do some *bonkers* stuff whenever they're expanded. 
 %% I would recommend that you DO NOT use them in production.
 
