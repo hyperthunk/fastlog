@@ -1,0 +1,6 @@
+[{deps, [
+    {"hyperthunk/gen_server2", []},
+    {"hyperthunk/appstart", []},
+    {"kvc", []},
+    {"hyperthunk/hamcrest-erlang", []}
+]}].
