@@ -44,6 +44,7 @@
         ,start_link/1]).
 
 -define(DEFAULT, fastlog).
+-define(DEFAULT_PATTERN, "[~p]").
 
 -type(mode() :: on | off).
 
@@ -52,7 +53,8 @@
     debug = off :: mode(),
     info  = off :: mode(),
     warn  = off :: mode(),
-    error = on  :: mode()
+    error = on  :: mode(),
+	pattern = ?DEFAULT_PATTERN	:: [char()]
 }).
 
 -spec(start/0 :: () -> {'ok', pid()} | 'ignore' | {'error', any()}).

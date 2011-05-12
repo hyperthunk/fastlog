@@ -1,6 +1,6 @@
 %% -----------------------------------------------------------------------------
 %%
-%% Copyright (c) 2008-2010 Tim Watson (watson.timothy@gmail.com)
+%% Copyright (c) 2011 Tim Watson (watson.timothy@gmail.com)
 %%
 %% Permission is hereby granted, free of charge, to any person obtaining a copy
 %% of this software and associated documentation files (the "Software"), to deal
@@ -21,33 +21,9 @@
 %% THE SOFTWARE.
 %%
 %% -----------------------------------------------------------------------------
+-module(fastlog_logger).
 
--record('fastlog.callsite', {
-    node        :: atom(),
-    pid         :: pid(),
-    module      :: module(),
-    function    :: atom(),
-    arity       :: integer(),
-    line        :: integer()
-}).
+-export([log/3]).
 
--record('fastlog.entry', {
-    message = ""         :: [char()],
-    args    = []         :: [term()],
-    dest    = undefined  :: atom(),
-    site    = undefined  :: #'fastlog.callsite'{}
-}).
-
-%% NB: these macros do some *bonkers* stuff whenever they're expanded. 
-%% I would recommend that you DO NOT use them in production.
-
-%% TODO: provide a parse transform to do this instead.....
-
--define(DEBUG(Format, Args), 
-    fastlog:debug(Format, Args)).
--define(INFO(Format, Args), 
-    fastlog:info(Format, Args)).
--define(WARN(Format, Args), 
-    fastlog:warn(Format, Args)).
--define(ERROR(Format, Args), 
-    fastlog:error(Format, Args)).
+log(Level, Format, Args) when Level =:= debug orelse Level =:= info ->
+    error_logger:info_msg(Format, Args).

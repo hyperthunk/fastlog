@@ -51,6 +51,10 @@
         ,error/2
         ,error/3]).
 
+-compile({no_auto_import,[error/2]}).
+
+-include("fastlog.hrl").
+
 -type(level() :: debug | info | warn | error | off).
 
 -spec(set_level/1   :: (level()) -> {ok, level()}).
@@ -116,44 +120,52 @@ set_level(Lvl) ->
 set_level(Name, Lvl) ->
     gen_server:call(server_name(Name), {set_level, Lvl}).
 
+debug(E=#'fastlog.entry'{dest=Dest}) ->
+    debug(Dest, E);
 debug(Format) ->
     debug(fastlog, Format).
 
-debug(Name, Format) when is_atom(Name) ->
-    log(Name, {debug, Format});
+debug(Name, Entry) when is_atom(Name) ->
+    log(Name, {debug, Entry});
 debug(Format, Args) when is_list(Args) ->
     debug(fastlog, Format, Args).
 
 debug(Name, Format, Args) when is_list(Args) ->
     log(Name, {debug, Format, Args}).
 
+info(E=#'fastlog.entry'{dest=Dest}) ->
+    info(Dest, E);
 info(Format) ->
     info(fastlog, Format).
 
-info(Name, Format) when is_atom(Name) ->
-    log(Name, {info, Format});
+info(Name, Entry) when is_atom(Name) ->
+    log(Name, {info, Entry});
 info(Format, Args) when is_list(Args) ->
     info(fastlog, Format, Args).
 
 info(Name, Format, Args) when is_list(Args) ->
     log(Name, {info, Format, Args}).
 
+warn(E=#'fastlog.entry'{dest=Dest}) ->
+    warn(Dest, E);
 warn(Format) ->
     warn(fastlog, Format).
 
-warn(Name, Format) when is_atom(Name) ->
-    log(Name, {warn, Format});
+warn(Name, Entry) when is_atom(Name) ->
+    log(Name, {warn, Entry});
 warn(Format, Args) when is_list(Args) ->
     warn(fastlog, Format, Args).
 
 warn(Name, Format, Args) when is_list(Args) ->
     log(Name, {warn, Format, Args}).
 
+error(E=#'fastlog.entry'{dest=Dest}) ->
+    error(Dest, E);
 error(Format) ->
     fastlog:error(fastlog, Format).
 
-error(Name, Format) when is_atom(Name) ->
-    log(Name, {error, Format});
+error(Name, Entry) when is_atom(Name) ->
+    log(Name, {error, Entry});
 error(Format, Args) when is_list(Args) ->
     fastlog:error(fastlog, Format, Args).
 
@@ -178,7 +190,10 @@ match_appender(Name) ->
     end.
 
 match_appender(Name, Appender) ->
-    [_,Pattern] = binary:split(Appender, <<".">>),
+    Pattern = case binary:split(Appender, <<".">>) of
+		[_,Rem] -> Rem;
+		[All] -> All
+	end,
     Len = byte_size(Pattern),
     case binary:longest_common_prefix([Pattern, Name]) of
         0 -> 

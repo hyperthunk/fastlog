@@ -5,3 +5,11 @@ ebin/fastlog_sup.beam
 ebin/fastlog.beam
 ebin/fastlog_sup.beam
 ebin/fastlog_server.beam
+logs
+ebin/fastlog.beam
+ebin/fastlog_logger.beam
+ebin/fastlog_server.beam
+ebin/fastlog_sup.beam
+ebin/fastlog_utils.beam
+test/fastlog_logger_SUITE.beam
+test/fastlog_utils_SUITE.beam
