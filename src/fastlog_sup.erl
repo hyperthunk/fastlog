@@ -28,8 +28,8 @@
 %% -----------------------------------------------------------------------------
 
 -module(fastlog_sup).
-
 -behaviour(supervisor).
+-include("fastlog.hrl").
 
 %% API
 -export([start_link/0, start_link/1, 
@@ -38,11 +38,13 @@
 %% Supervisor callbacks
 -export([init/1]).
 
+-type(start_result() :: {'ok', pid()} | 'ignore' | {'error', any()}).
+
 %% -----------------------------------------------------------------------------
 %% API functions
 %% -----------------------------------------------------------------------------
 
--spec(start_link/0 :: () -> {'ok', pid()} | 'ignore' | {'error', any()}).
+-spec(start_link/0 :: () -> start_result()).
 start_link() ->
     Options = case application:get_all_env(fastlog) of
         [] -> [{level, info}, {name, fastlog}];
@@ -50,10 +52,11 @@ start_link() ->
     end,
     start_link(Options).
 
+-spec(start_link/1 :: ([{atom(), term()}]) -> start_result()).
 start_link(Options) ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, Options).
 
-add_logger(Name) ->
+add_logger(Name) when is_atom(Name) orelse is_list(Name) ->
     add_logger(Name, [[{level, info}]]).
     
 add_logger(Name, Config) when is_atom(Name) ->
