@@ -22,31 +22,13 @@
 %%
 %% -----------------------------------------------------------------------------
 -module(fastlog_utils).
--include("fastlog.hrl").
-
 -export([compile_pattern/1]).
-
--export([do_something/0, compile_formatter/2]).
-
--compile({parse_transform, abstract_code}).
-
-do_something() ->
-    fun(Level, {_, Message, Args, _,
-                    {_, Node, Pid, Module,
-                     Function, Arity, Line}}) ->
-        %% ?assertThat(I, equal_to([pid, node, level, module, function, arity, line, message])).
-        Pattern = "[~p on ~p][~p] [~p] [~p/~p - line:~p] %s",
-        Format = re:replace(Pattern, "%s", Message, [{return, list}]),
-        Argv = [Pid, Node, Level, Module, Function, Arity, Line|Args],
-        {Format, Argv}
-    end.
+%% -compile({parse_transform, abstract_code}).
 
 compile_pattern(Pattern) ->
     case match_pattern(Pattern) of
         nomatch ->
-            fun(_, Msg, Args) ->
-                {Pattern ++ Msg, Args}
-            end;
+            undefined;
         {match, Matches} ->
             {Fmt, Idx} = lists:foldl(fun compile_pattern/2,
                                     {Pattern, []}, Matches),
@@ -77,9 +59,7 @@ pattern_entry($p) ->
 pattern_entry($n) ->
     {"~p", node};
 pattern_entry($s) ->
-    {"%s", message};
-pattern_entry(Other) ->
-    throw({unknown_format, Other}).
+    {"%s", message}.
 
 match_pattern(P) ->
     re:run(P, "%.{1}", [{capture, all, list}, global]).
@@ -124,7 +104,7 @@ abstract([H|T]) ->
 abstract(Other) ->
     {var, 0, list_to_atom(varname_for(Other))}.
 
-varname_for(Item) ->
+varname_for(Item) when is_atom(Item) ->
     [Char|Rest] = atom_to_list(Item),
     [string:to_upper(Char)|Rest].
 

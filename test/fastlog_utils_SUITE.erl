@@ -31,14 +31,17 @@
 -include_lib("hamcrest/include/hamcrest.hrl").
 -include("../include/fastlog.hrl").
 
-%% custom matchers
-is_function(Arity) ->
-    match_mfa(erlang, is_function, [Arity]).
-
-test_multiple_indexes_in_pattern() ->
+non_matching_pattern_doesnt_compile() ->
     [{userdata,[{doc,"Parse a format/pattern with multiple entries."}]}].
 
-test_multiple_indexes_in_pattern(_Config) ->
+non_matching_pattern_doesnt_compile(_Config) ->
+    Res = fastlog_utils:compile_pattern("this pattern has no format strings: ~s~n"),
+    ?assertThat(Res, is_undefined()).
+
+multiple_indexes_in_pattern() ->
+    [{userdata,[{doc,"Parse a format/pattern with multiple entries."}]}].
+
+multiple_indexes_in_pattern(_Config) ->
     Fun = fastlog_utils:compile_pattern("[%p on %n][%L] [%m] [%f/%a - line:%l] %s"),
     {F,I} = Fun(debug, #'fastlog.entry'{
         message="Hello ~s World\n",
@@ -48,18 +51,25 @@ test_multiple_indexes_in_pattern(_Config) ->
             node=node(),
             pid=self(),
             module=?MODULE,
-            function=test_multiple_indexes_in_pattern,
+            function=multiple_indexes_in_pattern,
             arity=1,
             line=53
         }
     }),
     ?assertThat(F, equal_to("[~p on ~p][~p] [~p] [~p/~p - line:~p] Hello ~s World\n")),
-    ?assertThat(I, equal_to([self(), 
-                             node(), 
-                             debug, 
-                             ?MODULE, 
-                             test_multiple_indexes_in_pattern, 
+    ?assertThat(I, equal_to([self(),
+                             node(),
+                             debug,
+                             ?MODULE,
+                             multiple_indexes_in_pattern,
                              1, 53, "cruel"])).
+
+%% custom matchers
+is_function(Arity) ->
+    match_mfa(erlang, is_function, [Arity]).
+
+is_undefined() ->
+    equal_to(undefined).
 
 all() ->
     [ {exports, Functions} | _ ] = ?MODULE:module_info(),

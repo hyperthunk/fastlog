@@ -43,8 +43,10 @@
         ,start_link/0
         ,start_link/1]).
 
+-include("fastlog.hrl").
+
 -define(DEFAULT, fastlog).
--define(DEFAULT_PATTERN, "[~p]").
+-define(DEFAULT_PATTERN, "[%n] [%p] [%L] [%m] [%f] [line:%l] %s").
 
 -type(mode() :: on | off).
 
@@ -54,8 +56,13 @@
     info  = off :: mode(),
     warn  = off :: mode(),
     error = on  :: mode(),
-	pattern = ?DEFAULT_PATTERN	:: [char()]
+    handler     :: atom(),
+	formatter   :: function()
 }).
+
+%%
+%% Public API
+%%
 
 -spec(start/0 :: () -> {'ok', pid()} | 'ignore' | {'error', any()}).
 %% @doc starts erlxsl_fast_log (standalong) with the default options.
@@ -81,63 +88,73 @@ start_link(Options) ->
         [] -> {DefaultName, [{name, DefaultName}|Options]};
         Value -> {Value, Options}
     end,
-    gen_server:start_link({local, Name}, 
+    gen_server:start_link({local, Name},
                             ?MODULE, [StartArgs], []).
 
-%%--------------------------------------------------------------------
+%%
+%% gen_server API
+%%
 
 init([Options]) ->
     Lvl = proplists:get_value(level, Options, error),
     Name = proplists:get_value(name, Options, ?DEFAULT),
-    State = set_level(Lvl, #state{name=Name}),
+    Handler = proplists:get_value(handler, Options, fastlog_logger),
+    Pattern = proplists:get_value(pattern, Options, ?DEFAULT_PATTERN),
+    Formatter = fastlog_utils:compile_pattern(Pattern),
+    State = set_level(Lvl, #state{name=Name, handler=Handler,
+                                  formatter=Formatter}),
     {ok, State}.
 
 handle_call(get_level, _From, State) ->
     {reply, get_level(State), State};
 handle_call({set_level, Lvl}, _From, State) ->
     {reply, {ok, Lvl}, set_level(Lvl, State)};
-handle_call(_Request, _From, State) ->
-    {noreply, State}.
+handle_call({_Lvl, _Entry}=Msg, _From, State) ->
+    handle_cast(Msg, State),
+    {reply, ok, State};
+handle_call({_Lvl, _Fmt, _Args}=Msg, _From, State) ->
+    handle_cast(Msg, State),
+    {reply, ok, State}.
 
 handle_cast({debug, _}, #state{debug=off}=State) ->
     {noreply, State};
-handle_cast({debug, Format}, State=#state{name=Name}) ->
-    error_logger:info_msg(format(Format), [Name]),
+handle_cast({debug, Entry}, State) ->
+    log(warn, Entry, State),
     {noreply, State};
 handle_cast({debug, _, _}, #state{debug=off}=State) ->
     {noreply, State};
-handle_cast({debug, Format, Args}, State=#state{name=Name}) ->
-    error_logger:info_msg(format(Format), [Name|Args]),
+handle_cast({debug, Format, Args}, State) ->
+    log(debug, Format, Args, State),
     {noreply, State};
 handle_cast({info, _}, #state{info=off}=State) ->
     {noreply, State};
-handle_cast({info, Format}, State=#state{name=Name}) ->
-    error_logger:info_msg(format(Format), [Name]),
+handle_cast({info, Entry}, State) ->
+    log(info, Entry, State),
     {noreply, State};
 handle_cast({info, _, _}, #state{info=off}=State) ->
     {noreply, State};
-handle_cast({info, Format, Args}, State=#state{name=Name}) ->
-    error_logger:info_msg(format(Format), [Name|Args]),
+handle_cast({info, Format, Args}, State) ->
+    log(info, Format, Args, State),
     {noreply, State};
 handle_cast({warn, _}, #state{warn=off}=State) ->
     {noreply, State};
-handle_cast({warn, Format}, State=#state{name=Name}) ->
-    error_logger:warning_msg(format(Format), [Name]),
+handle_cast({warn, Entry}, State) ->
+    log(warn, Entry, State),
     {noreply, State};
 handle_cast({warn, _, _}, #state{warn=off}=State) ->
     {noreply, State};
-handle_cast({warn, Format, Args}, State=#state{name=Name}) ->
-    error_logger:warning_msg(format(Format), [Name|Args]),
+handle_cast({warn, Format, Args}, State) ->
+    log(warn, Format, Args, State),
     {noreply, State};
 handle_cast({error, _}, #state{error=off}=State) ->
     {noreply, State};
-handle_cast({error, Format}, State=#state{name=Name}) ->
-    error_logger:error_msg(format(Format), [Name]),
+handle_cast({error, Entry}, State) ->
+    log(error, Entry, State),
     {noreply, State};
 handle_cast({error, _, _}, #state{error=off}=State) ->
     {noreply, State};
-handle_cast({error, Format, Args}, State=#state{name=Name}) ->
-    error_logger:error_msg(format(Format), [Name|Args]),
+handle_cast({error, Format, Args}, State) ->
+    log(error, Format, Args, State),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -153,8 +170,23 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-format(Format) ->
-    "[~p] " ++ Format.
+%%
+%% Internal API
+%%
+
+log(Lvl, #'fastlog.entry'{}=Entry,
+         #state{handler=Handler, formatter=Formatter})
+                                        when is_function(Formatter, 2) ->
+    {Format, Args} = Formatter(Lvl, Entry),
+    Handler:log(Lvl, Format, Args);
+log(Lvl, #'fastlog.entry'{message=Msg, args=Args},
+         #state{handler=Handler, formatter=undefined}) ->
+    Handler:log(Lvl, Msg, Args);
+log(Lvl, Entry, #state{handler=Handler}) when is_list(Entry) ->
+    Handler:log(Lvl, Entry, []).
+
+log(Lvl, Entry, Args, #state{handler=Handler}) when is_list(Entry) ->
+    Handler:log(Lvl, Entry, Args).
 
 set_level(Lvl, State) ->
     {D2, I2, W2, E2} = set_level(Lvl),
