@@ -28,7 +28,7 @@ demo() ->
     fastlog:configure(myapp),
 
     %% add a new (named) logger
-    fastlog:add_logger('net.kit.event.*', [{level, debug}]),
+    fastlog:add_logger('net.kit.event.*', debug),
 
     %% update the level of an existing logger
     fastlog:set_level(my.logger, warn),
@@ -43,6 +43,11 @@ demo() ->
     %% log using wildcard - this will hit the 'net.kit.event.*'
     %% logger we defined earlier....
     fastlog:warn(net.kit.event.consumer, "I am the consumer....~n"),
+    
+    %% use macros (with fastlog_parse_trans these will be expanded
+    %% to include lots of additional details)
+    ?DEBUG("Hello ~s~n", ["World"]),
+    ok.
 ```
 
 There are many more features available, which are documented on the 
