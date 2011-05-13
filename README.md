@@ -15,6 +15,7 @@ Include it in your deps (or stick on your `ERL_LIBS` path) and use at your leisu
 %% rebar.config
 {deps, [{fastlog, ".*", {git, "git@github.com:hyperthunk/fastlog.git", "master"}}]}.
 ```
+Please consult the [wiki](http://github.com/hyperthunk/fastlog/wiki) for more details.
 
 ## API Quickstart
 
@@ -44,6 +45,9 @@ demo() ->
     fastlog:warn(net.kit.event.consumer, "I am the consumer....~n"),
 ```
 
+There are many more features available, which are documented on the 
+[wiki](http://github.com/hyperthunk/fastlog/wiki).
+
 ## Configuration Options
 
 You can configure fastlog in your application (or release) config and load it
@@ -63,6 +67,10 @@ using the `fastlog:configure/1` function. Here's an example:
 ]}
 ```
 
+There are other configuration elements and options, which are documented on 
+the [wiki](http://github.com/hyperthunk/fastlog/wiki).
+
 ## Status and Version Management
 
-This project is in alpha at the moment. We will use semantic versioning.
+This project will use [semantic versioning](http://semver.org). API stability
+will be provided from version *1.0.0* onwards.
