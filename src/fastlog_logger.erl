@@ -25,5 +25,9 @@
 
 -export([log/3]).
 
+log(error, Format, Args) ->
+    error_logger:error_msg(Format, Args);
+log(warn, Format, Args) ->
+    error_logger:warning_msg(Format, Args);
 log(Level, Format, Args) when Level =:= debug orelse Level =:= info ->
     error_logger:info_msg(Format, Args).

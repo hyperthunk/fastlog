@@ -7,14 +7,44 @@
 
 -compile(export_all).
 
-test_fastlog_logger() ->
-    [{userdata,[{doc, "Testing fastlog_logger delegation to error_logger."}]}].
+debug_logging_delegation() ->
+    [{userdata,[{doc, "fastlog_logger delegates debug to error_logger."}]}].
 
-test_fastlog_logger(_Config) ->
+debug_logging_delegation(_Config) ->
     Format = "This is my message: ~s~n",
     Args = ["Hello World!"],
     meck:expect(error_logger, info_msg, expect(Format, Args)),
     fastlog_logger:log(debug, Format, Args),
+    ?assertThat(meck:validate(error_logger), is(true)).
+
+info_logging_delegation() ->
+    [{userdata,[{doc, "fastlog_logger delegates info to error_logger."}]}].
+
+info_logging_delegation(_Config) ->
+    Format = "This is my message: ~s~n",
+    Args = ["Hello World!"],
+    meck:expect(error_logger, info_msg, expect(Format, Args)),
+    fastlog_logger:log(info, Format, Args),
+    ?assertThat(meck:validate(error_logger), is(true)).
+
+warn_logging_delegation() ->
+    [{userdata,[{doc, "fastlog_logger delegates warn to error_logger."}]}].
+
+warn_logging_delegation(_Config) ->
+    Format = "This is my message: ~s~n",
+    Args = ["Hello World!"],
+    meck:expect(error_logger, warning_msg, expect(Format, Args)),
+    fastlog_logger:log(warn, Format, Args),
+    ?assertThat(meck:validate(error_logger), is(true)).
+
+error_logging_delegation() ->
+    [{userdata,[{doc, "fastlog_logger delegates error to error_logger."}]}].
+
+error_logging_delegation(_Config) ->
+    Format = "This is my message: ~s~n",
+    Args = ["Hello World!"],
+    meck:expect(error_logger, error_msg, expect(Format, Args)),
+    fastlog_logger:log(error, Format, Args),
     ?assertThat(meck:validate(error_logger), is(true)).
 
 expect(Format, Args) ->
