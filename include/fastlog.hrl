@@ -22,6 +22,11 @@
 %%
 %% -----------------------------------------------------------------------------
 
+-type(level() :: debug | info | warn | error | off).
+-type(logger_spec() :: {ok, pid() | undefined} |
+                       {ok, pid() | undefined, term()} |
+                       {error, term()}).
+
 -record('fastlog.callsite', {
     node        :: atom(),
     pid         :: pid(),
@@ -38,11 +43,16 @@
     site    = undefined  :: #'fastlog.callsite'{}
 }).
 
-%% NB: these macros do some *bonkers* stuff whenever they're expanded. 
-%% I would recommend that you DO NOT use them in production.
-
-%% TODO: provide a parse transform to do this instead.....
-
+-ifdef(FASTLOG_SYNC).
+-define(DEBUG(Format, Args), 
+    fastlog:sync_debug(Format, Args)).
+-define(INFO(Format, Args), 
+    fastlog:sync_info(Format, Args)).
+-define(WARN(Format, Args), 
+    fastlog:sync_warn(Format, Args)).
+-define(ERROR(Format, Args), 
+    fastlog:sync_error(Format, Args)).
+-else.
 -define(DEBUG(Format, Args), 
     fastlog:debug(Format, Args)).
 -define(INFO(Format, Args), 
@@ -51,3 +61,4 @@
     fastlog:warn(Format, Args)).
 -define(ERROR(Format, Args), 
     fastlog:error(Format, Args)).
+-endif.
