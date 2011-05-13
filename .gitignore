@@ -13,3 +13,4 @@ ebin/fastlog_sup.beam
 ebin/fastlog_utils.beam
 test/fastlog_logger_SUITE.beam
 test/fastlog_utils_SUITE.beam
+ebin/fastlog.app
