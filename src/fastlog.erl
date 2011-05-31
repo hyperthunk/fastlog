@@ -36,7 +36,7 @@
          remove_logger/1, server_name/1]).
 
 -export([set_level/1, set_level/2,
-         get_level/0, get_level/1]).
+         get_level/0, get_level/1, check_level/1]).
 
 -export([debug/1, debug/2, debug/3]).
 -export([info/1, info/2, info/3]).
@@ -103,6 +103,18 @@ get_level() ->
 get_level(Name) ->
     gen_server:call(server_name(Name), get_level).
 
+-spec(check_level/1 :: (atom()) -> [{atom(), level()}]).
+check_level(Name) ->
+    %% TODO: reconsider where this belongs
+    Loggers = supervisor:which_children(fastlog_sup),
+    case lists:filter(match_appender(Name), Loggers) of
+        [] ->
+            %% we don't fall over if the logger isn't there...
+            {none, Loggers};
+        Items ->
+            lists:zip(Items, lists:map(fun get_level/1, Items))
+    end.
+
 %% @doc Sets the current log level for the top level logger
 -spec(set_level/1 :: (level()) -> {ok, level()}).
 set_level(Lvl) ->
@@ -136,18 +148,14 @@ match_appender(Name) ->
     end.
 
 match_appender(Name, Appender) ->
-    Pattern = case binary:split(Appender, <<".">>) of
-		[_,Rem] -> Rem;
-		[All] -> All
-	end,
-    Len = byte_size(Pattern),
-    case binary:longest_common_prefix([Pattern, Name]) of
+    Len = byte_size(Appender),
+    case binary:longest_common_prefix([Appender, Name]) of
         0 ->
             false;
         N when N == Len ->
             true;
         Index ->
-            Chunks = binary:part(Pattern, Index, Len - Index),
+            Chunks = binary:part(Appender, Index, Len - Index),
             hd(binary:split(Chunks, <<".">>, [global])) == <<"*">>
     end.
 
