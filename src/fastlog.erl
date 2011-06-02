@@ -32,8 +32,8 @@
 
 -export([start/0, stop/0]).
 
--export([configure/1, add_logger/1, add_logger/2,
-         remove_logger/1, server_name/1]).
+-export([configure/1, load_config/1, add_logger/1,
+         add_logger/2, remove_logger/1, server_name/1]).
 
 -export([set_level/1, set_level/2,
          get_level/0, get_level/1, check_level/1]).
@@ -70,8 +70,12 @@ add_logger(Name) ->
 %% application:get_all_env/1 to get back the 'fastlog' configuration.
 %% @end
 -spec(configure/1 :: (atom()) -> ignored | [logger_spec()]).
-configure(AppName) ->
-    case kvc:path(fastlog, application:get_all_env(AppName)) of
+configure(AppName) when is_atom(AppName) ->
+    load_config(application:get_all_env(AppName)).
+
+-spec(load_config/1 :: (list(term())) -> ignored | [logger_spec()]).
+load_config(AppData) ->
+    case kvc:path(fastlog, AppData) of
         [] ->
             ignored;
         Config ->
