@@ -116,7 +116,8 @@ check_level(Name) ->
             %% we don't fall over if the logger isn't there...
             {none, Loggers};
         Items ->
-            lists:zip(Items, lists:map(fun get_level/1, Items))
+			Names = [ N || {N,_,_,_} <- Items ],
+            lists:zip(Items, lists:map(fun get_level/1, Names))
     end.
 
 %% @doc Sets the current log level for the top level logger
