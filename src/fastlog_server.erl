@@ -194,20 +194,15 @@ set_level(Lvl, State) ->
 
 set_level(Lvl) ->
     case Lvl of
-        debug ->
-            {on, on, on, on};
-        info ->
-            {off, on, on, on};
-        warn ->
-            {off, off, on, on};
-        error ->
-            {off, off, off, on};
-        none ->
-            {off, off, off, off}
+        debug -> {on,  on, 	on,  on};
+        info ->  {off, on, 	on,  on};
+        warn ->  {off, off, on,  on};
+        error -> {off, off, off, on};
+        none ->  {off, off, off, off}
     end.
 
-get_level(#state{ debug=on }) -> debug;
-get_level(#state{ debug=off, info=on }) -> info;
-get_level(#state{ info=off, warn=on }) -> warn;
-get_level(#state{ warn=off, error=on }) -> error;
-get_level(#state{ error=off }) -> off.
+get_level(#state{ debug=on }) ->            debug;
+get_level(#state{ debug=off, info=on }) ->  info;
+get_level(#state{ info=off, warn=on }) ->   warn;
+get_level(#state{ warn=off, error=on }) ->  error;
+get_level(#state{ error=off }) ->           off.

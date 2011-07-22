@@ -43,22 +43,19 @@
     site    = undefined  :: #'fastlog.callsite'{}
 }).
 
--ifdef(FASTLOG_SYNC).
--define(DEBUG(Format, Args), 
-    fastlog:sync_debug(Format, Args)).
--define(INFO(Format, Args), 
-    fastlog:sync_info(Format, Args)).
--define(WARN(Format, Args), 
-    fastlog:sync_warn(Format, Args)).
--define(ERROR(Format, Args), 
-    fastlog:sync_error(Format, Args)).
+-define(LOG(Dest, Msg, Args), #'fastlog.entry'{
+    message=Msg, args=Args, dest=Dest,
+    site=#'fastlog.callsite'{
+        node=node(),
+        pid=self(),
+        module=?MODULE
+    }
+}).
+-ifdef(FASTLOG_OFF).
+-define(DEBUG(_Format, _Args), ok).
+-define(INFO(_Format, _Args), ok).
+-define(WARN(_Format, _Args), ok).
+-define(ERROR(_Format, _Args), ok).
 -else.
--define(DEBUG(Format, Args), 
-    fastlog:debug(Format, Args)).
--define(INFO(Format, Args), 
-    fastlog:info(Format, Args)).
--define(WARN(Format, Args), 
-    fastlog:warn(Format, Args)).
--define(ERROR(Format, Args), 
-    fastlog:error(Format, Args)).
+-include_lib("fastlog/include/fastlog_internal.hrl").
 -endif.

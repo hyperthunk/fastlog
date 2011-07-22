@@ -105,7 +105,12 @@ get_level() ->
 %% @doc Gets the current log level for logger identified by `Name'
 -spec(get_level/1 :: (atom()) -> level()).
 get_level(Name) ->
-    gen_server:call(server_name(Name), get_level).
+    try gen_server:call(server_name(Name), get_level) of
+        Val -> Val
+    catch
+        _:{noproc, {gen_server, call, [Name,get_level]}} ->
+            undefined
+    end.
 
 -spec(check_level/1 :: (atom()) -> [{atom(), level()}]).
 check_level(Name) ->
@@ -116,8 +121,8 @@ check_level(Name) ->
             %% we don't fall over if the logger isn't there...
             {none, Loggers};
         Items ->
-			Names = [ N || {N,_,_,_} <- Items ],
-            lists:zip(Items, lists:map(fun get_level/1, Names))
+            Names = [ N || {N,_,_,_} <- Items ],
+            lists:zip(Names, lists:map(fun get_level/1, Names))
     end.
 
 %% @doc Sets the current log level for the top level logger
@@ -130,6 +135,20 @@ set_level(Lvl) ->
 set_level(Name, Lvl) ->
     gen_server:call(server_name(Name), {set_level, Lvl}).
 
+server_name(Name) when is_atom(Name) ->
+    server_name(atom_to_list(Name));
+server_name(Name) when is_list(Name) ->
+    list_to_atom(Name).
+
+%%
+%% Internal API
+%%
+
+log(fastlog, Data, Mode) ->
+    case whereis(fastlog) of
+        undefined -> ok;
+        _ -> send_log_entry(fastlog, Data, Mode)
+    end;
 log(Name, Data, Mode) ->
     %% TODO: reconsider where this belongs
     Loggers = supervisor:which_children(fastlog_sup),
@@ -146,6 +165,11 @@ send_log_entry(S, Data, async) ->
 send_log_entry(S, Data, sync) ->
     gen_server:call(S, Data).
 
+match_appender(Name) when is_list(Name) ->
+    fun({Pattern,_,_,_}) ->
+        match_appender(list_to_binary(Name),
+                        atom_to_binary(Pattern, utf8))
+    end;
 match_appender(Name) ->
     fun({Pattern,_,_,_}) ->
         match_appender(atom_to_binary(Name, utf8),
@@ -164,12 +188,9 @@ match_appender(Name, Appender) ->
             hd(binary:split(Chunks, <<".">>, [global])) == <<"*">>
     end.
 
-server_name(Name) when is_atom(Name) ->
-    server_name(atom_to_list(Name));
-server_name(Name) when is_list(Name) ->
-    list_to_atom(Name).
-
-%% Start Boilerplate
+%%
+%% Public API (Boilerplate)
+%%
 
 %% TODO: document these functions without repeating the details for each.
 
